@@ -5,7 +5,7 @@ on:
     branches: [ main ]
     paths-ignore:
       - 'kubernetes/deployment.yaml'
-      - 'jenkins' # Ignore changes to this file to prevent loops
+      - 'jenkins/Jenkinsfile' # Ignore changes to this file to prevent loops
   pull_request:
     branches: [ main ]
 
