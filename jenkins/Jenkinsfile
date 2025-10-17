@@ -57,8 +57,8 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                    sh 'chmod +x $(which sonar-scanner || echo /usr/local/bin/sonar-scanner) || true'
+                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN'),
+                         string(credentialsId: 'sonarqube-url', variable: 'SONAR_URL')]) {
                     sh '''
                          sonar-scanner \
                         -Dsonar.projectKey= devsecops-integrated-ci-cd-pipeline \
@@ -110,5 +110,6 @@ pipeline {
         }
     }
 }
+
 
 
