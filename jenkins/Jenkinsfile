@@ -56,22 +56,24 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            environment {
-                SONAR_URL = "http://34.201.116.83:9000"
-            }
-            steps {
-                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                    sh '''
-                        echo "Running SonarQube scan..."
-                        sonar-scanner \
-                            -Dsonar.projectKey=devsecops-integrated-ci-cd-pipeline \
-                            -Dsonar.sources=./src \
-                            -Dsonar.host.url=$SONAR_URL \
-                            -Dsonar.login=$SONAR_TOKEN
-                    '''
-                }
-            }
+    environment {
+        SONAR_URL = "http://34.201.116.83:9000"
+    }
+    steps {
+        sh 'npm install -g sonar-scanner' // container ke andar install
+        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+            sh '''
+                echo "Running SonarQube scan..."
+                sonar-scanner \
+                    -Dsonar.projectKey=devsecops-integrated-ci-cd-pipeline \
+                    -Dsonar.sources=./src \
+                    -Dsonar.host.url=$SONAR_URL \
+                    -Dsonar.login=$SONAR_TOKEN
+            '''
         }
+    }
+}
+
 
         stage('Build Docker Image') {
             steps {
@@ -113,3 +115,4 @@ pipeline {
         }
     }
 }
+
