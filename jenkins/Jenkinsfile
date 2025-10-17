@@ -60,7 +60,12 @@ pipeline {
         SONAR_URL = "http://34.201.116.83:9000"
     }
     steps {
-        sh 'npm install -g sonar-scanner' // container ke andar install
+        // Install dependencies needed for sonar-scanner
+        sh '''
+            apk add --no-cache bash openjdk17 git
+            npm install -g sonar-scanner
+        '''
+
         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
             sh '''
                 echo "Running SonarQube scan..."
@@ -115,4 +120,5 @@ pipeline {
         }
     }
 }
+
 
