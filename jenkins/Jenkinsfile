@@ -29,9 +29,10 @@ pipeline {
                 sh 'npm ci'
             }
         }
+
         stage('Install Sonar Scanner') {
             steps {
-                sh 'npm install -g sonar-scanner' // global install
+                sh 'npm install -g sonar-scanner'
             }
         }
 
@@ -53,28 +54,24 @@ pipeline {
                 sh 'npm run build'
             }
         }
-      stage('SonarQube Analysis') {
-           environment {
-          SONAR_URL = "http://34.201.116.83:9000"
-      }
-      stage('SonarQube Analysis') {
-           environment {
-          SONAR_URL = "http://34.201.116.83:9000"
-      }
-    steps {
-        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-            sh '''
-                echo "Running SonarQube scan..."
-                sonar-scanner \
-                    -Dsonar.projectKey=devsecops-integrated-ci-cd-pipeline \
-                    -Dsonar.sources=./src \
-                    -Dsonar.host.url=$SONAR_URL \
-                    -Dsonar.login=$SONAR_TOKEN
-            '''
-        }
-    }
-}
 
+        stage('SonarQube Analysis') {
+            environment {
+                SONAR_URL = "http://34.201.116.83:9000"
+            }
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                        echo "Running SonarQube scan..."
+                        sonar-scanner \
+                            -Dsonar.projectKey=devsecops-integrated-ci-cd-pipeline \
+                            -Dsonar.sources=./src \
+                            -Dsonar.host.url=$SONAR_URL \
+                            -Dsonar.login=$SONAR_TOKEN
+                    '''
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
@@ -87,7 +84,7 @@ pipeline {
         stage('Trivy Scan Docker Image') {
             steps {
                 sh '''
-                docker run --rm aquasec/trivy image --severity CRITICAL,HIGH --ignore-unfixed $DOCKER_IMAGE
+                    docker run --rm aquasec/trivy image --severity CRITICAL,HIGH --ignore-unfixed $DOCKER_IMAGE
                 '''
             }
         }
@@ -116,13 +113,3 @@ pipeline {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
