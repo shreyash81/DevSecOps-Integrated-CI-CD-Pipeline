@@ -53,19 +53,22 @@ pipeline {
                 sh 'npm run build'
             }
         }
-       stage('Static Code Analysis') {
-            steps {
-              withCredentials([
-                  string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN'),
-                  string(credentialsId: 'sonarqube-url', variable: 'SONAR_URL')
-        ]) {
-            sh '''
+       stage('SonarQube Analysis') {
+    steps {
+        // SonarQube token ko securely use karne ke liye
+        withCredentials([string(credentialsId: 'SONAR_TOKEN_ID', variable: 'SONAR_TOKEN')]) {
+            // Pehle scanner location aur version check kar lo
+            sh 'which sonar-scanner'
+            sh 'sonar-scanner -v'
+            
+            // Phir actual Sonar scan run karo
+            sh """
                 sonar-scanner \
                 -Dsonar.projectKey=devsecops-integrated-ci-cd-pipeline \
                 -Dsonar.sources=./src \
                 -Dsonar.host.url=$SONAR_URL \
                 -Dsonar.login=$SONAR_TOKEN
-            '''
+            """
         }
     }
 }
@@ -113,6 +116,7 @@ pipeline {
         }
     }
 }
+
 
 
 
