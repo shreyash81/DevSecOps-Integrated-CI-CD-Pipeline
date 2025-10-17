@@ -10,7 +10,6 @@ pipeline {
         DOCKER_IMAGE = "chauhanshreyash18/devsecops-integrated-ci-cd-pipeline:${BUILD_NUMBER}"
         REGISTRY_CREDENTIALS = credentials('docker-cred')
         SNYK_TOKEN = credentials('snyk-token')
-        SONAR_TOKEN = credentials('sonarqube-token')
         SONAR_URL = credentials('sonarqube-url')
         K8S_DEPLOYMENT_PATH = "kubernetes/deployment.yml"
         GITHUB_TOKEN = credentials('github-token')
@@ -58,7 +57,8 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withEnv(["SONAR_TOKEN=${SONAR_TOKEN}"]) {
+                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                    sh 'chmod +x $(which sonar-scanner || echo /usr/local/bin/sonar-scanner) || true'
                     sh '''
                          sonar-scanner \
                         -Dsonar.projectKey= devsecops-integrated-ci-cd-pipeline \
@@ -110,4 +110,5 @@ pipeline {
         }
     }
 }
+
 
