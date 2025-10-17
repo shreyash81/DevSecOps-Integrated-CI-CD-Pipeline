@@ -14,6 +14,7 @@ pipeline {
         GITHUB_TOKEN = credentials('github-token')
         GIT_REPO_NAME = "devsecops-integrated-ci-cd-pipeline"
         GIT_USER_NAME = "shreyash81"
+        SONAR_URL = "http://13.232.3.232:9000"
     }
 
     stages {
@@ -32,7 +33,10 @@ pipeline {
 
         stage('Install Sonar Scanner') {
             steps {
-                sh 'npm install -g sonar-scanner'
+                sh '''
+                    apk add --no-cache bash openjdk17 git
+                    npm install -g sonar-scanner
+                '''
             }
         }
 
@@ -56,34 +60,24 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-    environment {
-        SONAR_URL = "http://13.232.3.232:9000"
-    }
-    steps {
-        // Install dependencies needed for sonar-scanner
-        sh '''
-            apk add --no-cache bash openjdk17 git
-            npm install -g sonar-scanner
-        '''
-
-        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-            sh '''
-                echo "Running SonarQube scan..."
-                sonar-scanner \
-                    -Dsonar.projectKey=devsecops-integrated-ci-cd-pipeline \
-                    -Dsonar.sources=./src \
-                    -Dsonar.host.url=$SONAR_URL \
-                    -Dsonar.login=$SONAR_TOKEN
-            '''
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                        echo "Running SonarQube scan..."
+                        sonar-scanner \
+                            -Dsonar.projectKey=devsecops-integrated-ci-cd-pipeline \
+                            -Dsonar.sources=./src \
+                            -Dsonar.host.url=$SONAR_URL \
+                            -Dsonar.login=$SONAR_TOKEN
+                    '''
+                }
+            }
         }
-    }
-}
-
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'apk add --no-cache docker-cli'
+                    // Docker CLI already mounted via socket
                     sh 'docker build -t $DOCKER_IMAGE .'
                 }
             }
@@ -91,9 +85,7 @@ pipeline {
 
         stage('Trivy Scan Docker Image') {
             steps {
-                sh '''
-                    docker run --rm aquasec/trivy image --severity CRITICAL,HIGH --ignore-unfixed $DOCKER_IMAGE
-                '''
+                sh 'docker run --rm aquasec/trivy image --severity CRITICAL,HIGH --ignore-unfixed $DOCKER_IMAGE'
             }
         }
 
@@ -121,7 +113,3 @@ pipeline {
         }
     }
 }
-
-
-
-
