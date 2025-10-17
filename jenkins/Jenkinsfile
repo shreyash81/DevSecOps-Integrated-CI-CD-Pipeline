@@ -53,22 +53,25 @@ pipeline {
                 sh 'npm run build'
             }
         }
-     stage('SonarQube Analysis') {
-           steps {
-            withCredentials([
-              string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN'),
-              string(credentialsId: 'sonarqube-url', variable: 'SONAR_URL')
+       stage('Static Code Analysis') {
+            steps {
+              withCredentials([
+                  string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN'),
+                  string(credentialsId: 'sonarqube-url', variable: 'SONAR_URL')
         ]) {
-            sh """
+            sh '''
                 sonar-scanner \
                 -Dsonar.projectKey=devsecops-integrated-ci-cd-pipeline \
                 -Dsonar.sources=./src \
                 -Dsonar.host.url=$SONAR_URL \
                 -Dsonar.login=$SONAR_TOKEN
-            """
+            '''
         }
     }
 }
+
+
+
 
         stage('Build Docker Image') {
             steps {
@@ -110,6 +113,7 @@ pipeline {
         }
     }
 }
+
 
 
 
