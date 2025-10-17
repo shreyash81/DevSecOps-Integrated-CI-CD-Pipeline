@@ -54,9 +54,12 @@ pipeline {
             }
         }
        stage('SonarQube Analysis') {
-    steps {
+            environment {
+         SONAR_URL = "http://13.232.3.232:9000"
+      }
+           steps {
         // SonarQube token ko securely use karne ke liye
-        withCredentials([string(credentialsId: 'SONAR_TOKEN_ID', variable: 'SONAR_TOKEN')]) {
+           withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
             // Pehle scanner location aur version check kar lo
             sh 'which sonar-scanner'
             sh 'sonar-scanner -v'
@@ -116,6 +119,7 @@ pipeline {
         }
     }
 }
+
 
 
 
