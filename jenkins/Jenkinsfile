@@ -57,7 +57,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
     environment {
-        SONAR_URL = "http://34.201.116.83:9000"
+        SONAR_URL = "http://13.232.3.232:9000"
     }
     steps {
         // Install dependencies needed for sonar-scanner
@@ -120,5 +120,6 @@ pipeline {
         }
     }
 }
+
 
 
