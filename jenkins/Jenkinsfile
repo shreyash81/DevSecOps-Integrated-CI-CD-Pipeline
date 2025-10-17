@@ -1,0 +1,101 @@
+pipeline {
+    agent {
+        docker {
+            image 'node:20-alpine'
+            args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+
+    environment {
+        DOCKER_IMAGE = "YOUR_DOCKERHUB_USERNAME/tictactoe:${BUILD_NUMBER}"
+        REGISTRY_CREDENTIALS = credentials('docker-cred')
+        SNYK_TOKEN = credentials('snyk-token')
+        SONAR_TOKEN = credentials('sonarqube-token')
+        SONAR_URL = "http://YOUR_SONARQUBE_URL"
+        K8S_DEPLOYMENT_PATH = "kubernetes/deployment.yaml" // update if different
+        GITHUB_CREDENTIALS = credentials('github-token')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/shreyash81/DevSecOps-Integrated-CI-CD-Pipeline.git'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'npm test || echo "No tests found"'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm ci'
+            }
+        }
+
+        stage('Snyk Scan') {
+            steps {
+                sh 'npx snyk auth $SNYK_TOKEN'
+                sh 'npx snyk test'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withEnv(["SONAR_TOKEN=${SONAR_TOKEN}"]) {
+                    sh 'npx sonar-scanner -Dsonar.projectKey=TicTacToe -Dsonar.sources=./src -Dsonar.host.url=${SONAR_URL} -Dsonar.login=${SONAR_TOKEN}'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh 'docker build -t $DOCKER_IMAGE .'
+                }
+            }
+        }
+
+        stage('Trivy Scan Docker Image') {
+            steps {
+                sh '''
+                docker run --rm aquasec/trivy image --severity CRITICAL,HIGH --ignore-unfixed $DOCKER_IMAGE
+                '''
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    def dockerImage = docker.image("$DOCKER_IMAGE")
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-cred') {
+                        dockerImage.push()
+                    }
+                }
+            }
+        }
+
+        stage('Update Kubernetes Deployment') {
+            steps {
+                script {
+                    sh """
+                    git config user.email "actions@github.com"
+                    git config user.name "Jenkins CI"
+                    sed -i "s|image: .*|image: $DOCKER_IMAGE|g" $K8S_DEPLOYMENT_PATH
+                    git add $K8S_DEPLOYMENT_PATH
+                    git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes"
+                    git push https://${GITHUB_CREDENTIALS}@github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME HEAD:main
+                    """
+                }
+            }
+        }
+    }
+}
