@@ -53,29 +53,26 @@ pipeline {
                 sh 'npm run build'
             }
         }
-       stage('SonarQube Analysis') {
-            environment {
-         SONAR_URL = "http://13.232.3.232:9000"
+      stage('SonarQube Analysis') {
+           environment {
+          SONAR_URL = "http://34.201.116.83:9000"
       }
-           steps {
-        // SonarQube token ko securely use karne ke liye
-           withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-            // Pehle scanner location aur version check kar lo
-            sh 'which sonar-scanner'
-            sh 'sonar-scanner -v'
-            
-            // Phir actual Sonar scan run karo
-            sh """
-                sonar-scanner \
-                -Dsonar.projectKey=devsecops-integrated-ci-cd-pipeline \
-                -Dsonar.sources=./src \
-                -Dsonar.host.url=$SONAR_URL \
-                -Dsonar.login=$SONAR_TOKEN
-            """
+      steps {
+        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+            script {
+                docker.image('sonarsource/sonar-scanner-cli:4.9.3.7346').inside {
+                    sh '''
+                        sonar-scanner \
+                        -Dsonar.projectKey=devsecops-integrated-ci-cd-pipeline \
+                        -Dsonar.sources=./src \
+                        -Dsonar.host.url=$SONAR_URL \
+                        -Dsonar.login=$SONAR_TOKEN
+                    '''
+                }
+            }
         }
     }
 }
-
 
 
 
@@ -119,6 +116,7 @@ pipeline {
         }
     }
 }
+
 
 
 
