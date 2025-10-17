@@ -10,7 +10,6 @@ pipeline {
         DOCKER_IMAGE = "chauhanshreyash18/devsecops-integrated-ci-cd-pipeline:${BUILD_NUMBER}"
         REGISTRY_CREDENTIALS = credentials('docker-cred')
         SNYK_TOKEN = credentials('snyk-token')
-        SONAR_URL = credentials('sonarqube-url')
         K8S_DEPLOYMENT_PATH = "kubernetes/deployment.yml"
         GITHUB_TOKEN = credentials('github-token')
         GIT_REPO_NAME = "devsecops-integrated-ci-cd-pipeline"
@@ -110,6 +109,7 @@ pipeline {
         }
     }
 }
+
 
 
 
