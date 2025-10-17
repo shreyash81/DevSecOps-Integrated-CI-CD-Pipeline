@@ -31,6 +31,11 @@ pipeline {
                 sh 'npm ci'
             }
         }
+        stage('Install Sonar Scanner') {
+            steps {
+                sh 'npm install -g sonar-scanner' // global install
+            }
+        }
 
         stage('Test') {
             steps {
@@ -55,8 +60,8 @@ pipeline {
             steps {
                 withEnv(["SONAR_TOKEN=${SONAR_TOKEN}"]) {
                     sh '''
-                        npx sonar-scanner \
-                        -Dsonar.projectKey=TicTacToe \
+                         sonar-scanner \
+                        -Dsonar.projectKey= devsecops-integrated-ci-cd-pipeline \
                         -Dsonar.sources=./src \
                         -Dsonar.host.url=${SONAR_URL} \
                         -Dsonar.login=${SONAR_TOKEN}
@@ -105,3 +110,4 @@ pipeline {
         }
     }
 }
+
