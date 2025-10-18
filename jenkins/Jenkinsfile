@@ -112,47 +112,31 @@ pipeline {
                 }
             }
         }
-      stage('Update Deployment File') {
+      stage('Update Kubernetes Deployment') {
             steps {
                 script {
-                    dir("${WORKSPACE}") {
-                        // 1️⃣ Clone repo if missing
-                        sh '''
-                        if [ ! -d ".git" ]; then
-                            echo "Git folder not found. Cloning repository..."
-                            git clone https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git .
-                        else
-                            echo "Git folder exists. Using existing repo."
-                        fi
-                        '''
+                    // 1️⃣ Clone fresh repo inside container
+                    sh '''
+                    rm -rf temp-repo
+                    git clone https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git temp-repo
+                    cd temp-repo
 
-                        // 2️⃣ Configure Git
-                        sh '''
-                        git config user.email "chauhanshreyash357@gmail.com"
-                        git config user.name "Shreyash Singh"
-                        '''
+                    # 2️⃣ Set Git user
+                    git config user.name "Shreyash Singh"
+                    git config user.email "chauhanshreyash357@gmail.com"
 
-                        // 3️⃣ Update deployment file
-                        sh '''
-                        if [ -f "${K8S_DEPLOYMENT_PATH}" ]; then
-                            sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" ${K8S_DEPLOYMENT_PATH}
-                        else
-                            echo "Deployment file not found at ${K8S_DEPLOYMENT_PATH}"
-                            exit 1
-                        fi
-                        '''
+                    # 3️⃣ Update deployment file
+                    sed -i "s|replaceImageTag|${BUILD_NUMBER}|g" kubernetes/deployment.yaml
 
-                        // 4️⃣ Commit & push only if changes
-                        sh '''
-                        git add ${K8S_DEPLOYMENT_PATH}
-                        if git diff --cached --quiet; then
-                            echo "No changes to commit."
-                        else
-                            git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
-                        fi
-                        '''
-                    }
+                    # 4️⃣ Commit & push only if changes
+                    git add kubernetes/deployment.yaml
+                    if git diff --cached --quiet; then
+                        echo "No changes to commit."
+                    else
+                        git commit -m "Update deployment image to version ${BUILD_NUMBER} [skip ci]"
+                        git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
+                    fi
+                    '''
                 }
             }
         }
