@@ -124,15 +124,16 @@ pipeline {
                             git config user.email "chauhanshreyash357@gmail.com"
                         """
 
-                        sh """
-                            if [ -f "kubernetes/deployment.yaml" ]; then
-                                echo "Updating image tag to BUILD_NUMBER: ${BUILD_NUMBER}"
-                                sed -i "s|\\(image: .*:\\).*|\\1${BUILD_NUMBER}|g" kubernetes/deployment.yaml
-                            else
-                                echo "ERROR: deployment.yaml not found!"
-                                exit 1
-                            fi
-                        """
+                       // Update the full image line in deployment.yaml
+                sh """
+                if [ -f "kubernetes/deployment.yaml" ]; then
+                    echo "Updating image to full image with BUILD_NUMBER: ${BUILD_NUMBER}"
+                    sed -i "s|image: .*|image: ghcr.io/${GIT_USER_NAME}/${GIT_REPO_NAME}:${BUILD_NUMBER}|g" kubernetes/deployment.yaml
+                else
+                    echo "ERROR: deployment.yaml not found!"
+                    exit 1
+                fi
+                """
 
                         sh """
                             git add kubernetes/deployment.yaml
@@ -151,4 +152,5 @@ pipeline {
 
     } // end stages
 } // end pipeline
+
 
