@@ -126,7 +126,8 @@ pipeline {
                     git config user.email "chauhanshreyash357@gmail.com"
 
                     # 3️⃣ Update deployment file
-                    sed -i "s|replaceImageTag|${BUILD_NUMBER}|g" kubernetes/deployment.yaml
+                    sed -i "s|\(image: .*:\).*|\1${BUILD_NUMBER}|g" kubernetes/deployment.yaml
+
 
                     # 4️⃣ Commit & push only if changes
                     git add kubernetes/deployment.yaml
@@ -143,3 +144,4 @@ pipeline {
 
     } // end stages
 } // end pipeline
+
