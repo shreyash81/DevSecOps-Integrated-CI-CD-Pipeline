@@ -128,7 +128,7 @@ pipeline {
                 sh """
                 if [ -f "kubernetes/deployment.yaml" ]; then
                     echo "Updating image to full image with BUILD_NUMBER: ${BUILD_NUMBER}"
-                    sed -i "s|image: .*|image: ghcr.io/${GIT_USER_NAME}/${GIT_REPO_NAME}:${BUILD_NUMBER}|g" kubernetes/deployment.yaml
+                   sed -i "s|image: .*|image: ${DOCKER_IMAGE}|g" kubernetes/deployment.yaml
                 else
                     echo "ERROR: deployment.yaml not found!"
                     exit 1
@@ -152,5 +152,6 @@ pipeline {
 
     } // end stages
 } // end pipeline
+
 
 
