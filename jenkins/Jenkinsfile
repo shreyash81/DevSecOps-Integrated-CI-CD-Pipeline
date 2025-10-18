@@ -14,7 +14,7 @@ pipeline {
         GITHUB_TOKEN = credentials('github-token')
         GIT_REPO_NAME = "devsecops-integrated-ci-cd-pipeline"
         GIT_USER_NAME = "shreyash81"
-        SONAR_URL = "http://13.232.3.232:9000"
+        SONAR_URL = "http://13.204.215.203:9000"
     }
 
     stages {
@@ -120,4 +120,5 @@ pipeline {
         }
     }
 }
+
 
