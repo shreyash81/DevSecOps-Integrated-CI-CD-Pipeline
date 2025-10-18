@@ -75,25 +75,32 @@ pipeline {
                 }
             }
         }
+        stage('Build & Scan') {
+    steps {
+        script {
+            sh '''
+                apk add --no-cache docker-cli bash
+                docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
+            '''
 
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    sh '''
-                        apk add --no-cache docker-cli bash
-                        docker build -t $DOCKER_IMAGE .
-                    '''
-                }
-            }
+            // Trivy Scan
+            sh """
+                docker run --rm \
+                  -v /var/run/docker.sock:/var/run/docker.sock \
+                  aquasec/trivy:latest image \
+                  --severity CRITICAL,HIGH \
+                  --ignore-unfixed \
+                  --vuln-type os,library \
+                  --format table \
+                  --exit-code 0 \
+                  ${DOCKER_IMAGE}:${BUILD_NUMBER}
+            """
         }
+    }
+}
 
-        stage('Trivy Scan Docker Image') {
-            steps {
-                sh '''
-                    docker run --rm aquasec/trivy image --severity CRITICAL,HIGH --ignore-unfixed $DOCKER_IMAGE
-                '''
-            }
-        }
+                  
+
 
         stage('Push Docker Image') {
             steps {
@@ -120,5 +127,6 @@ pipeline {
         }
     }
 }
+
 
 
