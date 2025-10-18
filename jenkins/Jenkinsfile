@@ -126,9 +126,8 @@ pipeline {
                     git config user.email "chauhanshreyash357@gmail.com"
 
                     # 3️⃣ Update deployment file
-                    sh '''
-                        sed -i "s|:.*$|:${BUILD_NUMBER}|g" kubernetes/deployment.yaml
-                       '''
+                     sh "sed -i \"s|:.*\\\$|:${BUILD_NUMBER}|g\" kubernetes/deployment.yaml"
+
 
 
 
@@ -147,5 +146,6 @@ pipeline {
 
     } // end stages
 } // end pipeline
+
 
 
