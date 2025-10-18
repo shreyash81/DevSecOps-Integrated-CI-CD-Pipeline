@@ -115,31 +115,47 @@ pipeline {
         stage('Update Deployment File') {
             steps {
                 script {
-                    // Clone repo if not already cloned inside container
-                    if (!fileExists('.git')) {
-                        sh '''
-                            git clone https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git .
-                        '''
-                    }
-
-                    // Now we are inside a git repo, safe to run git commands
+                    // Clone repo if missing
                     sh '''
-                        git config user.email "chauhanshreyash357@gmail.com"
-                        git config user.name "Shreyash Singh"
-                        
-                        # Update deployment file with the new build number
+                    if [ ! -d ".git" ]; then
+                        echo "Git folder not found. Cloning repository..."
+                        git clone https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git .
+                    else
+                        echo "Git folder exists. Using existing repo."
+                    fi
+                    '''
+
+                    // Configure Git
+                    sh '''
+                    git config user.email "chauhanshreyash357@gmail.com"
+                    git config user.name "Shreyash Singh"
+                    '''
+
+                    // Update deployment file
+                    sh '''
+                    if [ -f "${K8S_DEPLOYMENT_PATH}" ]; then
+                        echo "Updating deployment file with BUILD_NUMBER ${BUILD_NUMBER}..."
                         sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" ${K8S_DEPLOYMENT_PATH}
+                    else
+                        echo "ERROR: Deployment file not found at ${K8S_DEPLOYMENT_PATH}"
+                        exit 1
+                    fi
+                    '''
 
-                        # Commit only if there are changes
-                        git add ${K8S_DEPLOYMENT_PATH}
-                        git commit -m "Update deployment image to version ${BUILD_NUMBER}" || echo "No changes to commit"
-
-                        # Push changes using GitHub token
+                    // Commit & push only if changes exist
+                    sh '''
+                    git add ${K8S_DEPLOYMENT_PATH}
+                    if git diff --cached --quiet; then
+                        echo "No changes to commit."
+                    else
+                        echo "Committing and pushing changes..."
+                        git commit -m "Update deployment image to version ${BUILD_NUMBER}"
                         git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
+                    fi
                     '''
                 }
             }
         }
-    }
-}
-     
+
+    } // end stages
+} // end pipeline
