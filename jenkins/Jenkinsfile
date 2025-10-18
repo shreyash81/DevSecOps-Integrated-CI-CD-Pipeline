@@ -127,7 +127,7 @@ pipeline {
                         sh """
                             if [ -f "kubernetes/deployment.yaml" ]; then
                                 echo "Updating image tag to BUILD_NUMBER: ${BUILD_NUMBER}"
-                                sed -i "s|:.*\$|:${BUILD_NUMBER}|g" kubernetes/deployment.yaml
+                                sed -i "s|\\(image: .*:\\).*|\\1${BUILD_NUMBER}|g" kubernetes/deployment.yaml
                             else
                                 echo "ERROR: deployment.yaml not found!"
                                 exit 1
@@ -151,3 +151,4 @@ pipeline {
 
     } // end stages
 } // end pipeline
+
