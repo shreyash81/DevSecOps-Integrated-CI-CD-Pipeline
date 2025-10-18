@@ -113,39 +113,46 @@ pipeline {
             }
         }
       stage('Update Kubernetes Deployment') {
-            steps {
-                script {
-                    // 1️⃣ Clone fresh repo inside container
-                    sh '''
-                    rm -rf temp-repo
-                    git clone https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git temp-repo
-                    cd temp-repo
+    steps {
+        script {
+            // 1️⃣ Remove old temp folder if exists
+            sh 'rm -rf temp-repo'
 
-                    # 2️⃣ Set Git user
-                    git config user.name "Shreyash Singh"
-                    git config user.email "chauhanshreyash357@gmail.com"
+            // 2️⃣ Clone the repo into temp folder
+            sh "git clone https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git temp-repo"
 
-                    # 3️⃣ Update deployment file
-                     sh "sed -i \"s|:.*\\\$|:${BUILD_NUMBER}|g\" kubernetes/deployment.yaml"
+            // 3️⃣ Go into the cloned repo
+            dir('temp-repo') {
+                
+                // 4️⃣ Configure Git user
+                sh '''
+                git config user.name "Shreyash Singh"
+                git config user.email "chauhanshreyash357@gmail.com"
+                '''
 
+                // 5️⃣ Update the image tag in deployment.yaml
+                sh '''
+                if [ -f "kubernetes/deployment.yaml" ]; then
+                    echo "Updating image tag to BUILD_NUMBER: ${BUILD_NUMBER}"
+                    sed -i "s|:.*\$|:${BUILD_NUMBER}|g" kubernetes/deployment.yaml
+                else
+                    echo "ERROR: deployment.yaml not found!"
+                    exit 1
+                fi
+                '''
 
-
-
-                    # 4️⃣ Commit & push only if changes
-                    git add kubernetes/deployment.yaml
-                    if git diff --cached --quiet; then
-                        echo "No changes to commit."
-                    else
-                        git commit -m "Update deployment image to version ${BUILD_NUMBER} [skip ci]"
-                        git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
-                    fi
-                    '''
-                }
-            }
-        }
-
-    } // end stages
-} // end pipeline
-
-
-
+                // 6️⃣ Commit & push only if there are changes
+                sh '''
+                git add kubernetes/deployment.yaml
+                if git diff --cached --quiet; then
+                    echo "No changes to commit."
+                else
+                    echo "Committing and pushing changes..."
+                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
+                fi
+                '''
+            } // end dir
+        } // end script
+    } // end steps
+} // end stage
