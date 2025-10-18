@@ -80,7 +80,7 @@ pipeline {
         script {
             sh '''
                 apk add --no-cache docker-cli bash
-                docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .
+                docker build -t ${DOCKER_IMAGE} .
             '''
 
             // Trivy Scan
@@ -127,6 +127,7 @@ pipeline {
         }
     }
 }
+
 
 
 
