@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'node:20-alpine'
+            image 'docker:24.0.5' // Docker CLI + daemon access
             args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
@@ -21,6 +21,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
+                sh 'apk add --no-cache bash openjdk17 git nodejs npm'
                 git branch: 'main', url: 'https://github.com/shreyash81/devsecOps-integrated-ci-cd-pipeline.git'
             }
         }
@@ -119,3 +120,4 @@ pipeline {
         }
     }
 }
+
